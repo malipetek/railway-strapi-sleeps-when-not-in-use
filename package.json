@@ -4,7 +4,10 @@
   "version": "0.1.0",
   "description": "A Strapi application",
   "scripts": {
+    "managed:develop": "node railway_manager.mjs",
+    "managed:develop:local": "railway run -e development -s Strapi node railway_manager.mjs",
     "develop": "strapi develop",
+    "develop:local": "railway run -e development -s Strapi yarn develop",
     "start": "strapi start",
     "build": "strapi build",
     "strapi": "strapi"
@@ -15,6 +18,10 @@
     "@strapi/plugin-users-permissions": "4.5.5",
     "@strapi/provider-upload-cloudinary": "4.5.5",
     "@strapi/strapi": "4.5.5",
+    "execa": "^7.1.1",
+    "express": "^4.18.2",
+    "express-http-proxy": "^1.6.3",
+    "http-mitm-proxy": "^1.0.0",
     "pg": "8.8.0"
   },
   "author": {
