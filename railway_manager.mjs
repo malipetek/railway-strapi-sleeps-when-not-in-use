@@ -1,9 +1,10 @@
 
 
 import express from 'express';
-import { spawn } from 'child_process';
+import { spawn, exec } from 'child_process';
 import proxy from 'express-http-proxy';
 import kill from 'tree-kill';
+const execute = (command) => new Promise((d) => exec(command, function (error, stdout, stderr) { d(stdout); }));
 
 let child;
 
@@ -36,7 +37,12 @@ app.use('/', async (req, res, next) => {
     return res.send('Waking up Strapi, please wait...');
   }
 
-  next();
+  const execResult = await execute(`lsof -i:1337 -t`);
+  if (execResult) {
+    next();
+  } else {
+    res.send('Still waking up...');
+  }
 }, proxy('http://0.0.0.0:1337'));
 
 app.listen(process.env.PORT || 3000, () => {
