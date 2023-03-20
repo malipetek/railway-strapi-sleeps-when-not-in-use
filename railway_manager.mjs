@@ -13,7 +13,11 @@ app.use('/', async (req, res, next) => {
 
   console.log('!child || child.killed', !child, child?.killed);
   if (!child || child.killed) {
-    child = spawn(`railway`, ['run', '-e', 'development', '-s', 'Strapi',  'yarn', 'develop'], { stdio: ['pipe', 'inherit', 'inherit', 'ipc'] });
+    if (process.argv.indexOf('--local') >= 0) {
+      child = spawn(`railway`, ['run', '-e', 'development', '-s', 'Strapi',  'yarn', 'develop'], { stdio: ['pipe', 'inherit', 'inherit', 'ipc'] });
+    } else {
+      child = spawn(`yarn`, ['develop'], { stdio: ['pipe', 'inherit', 'inherit', 'ipc'] });
+    }
     return res.send('Waking up Strapi, please wait...');
   }
 

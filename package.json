@@ -5,7 +5,7 @@
   "description": "A Strapi application",
   "scripts": {
     "managed:develop": "node railway_manager.mjs",
-    "managed:develop:local": "railway run -e development -s Strapi node railway_manager.mjs",
+    "managed:develop:local": "railway run -e development -s Strapi node railway_manager.mjs --local",
     "develop": "strapi develop",
     "develop:local": "railway run -e development -s Strapi yarn develop",
     "start": "strapi start",
