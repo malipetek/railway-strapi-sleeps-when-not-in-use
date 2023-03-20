@@ -1,10 +1,10 @@
 
 
 import express from 'express';
-import { spawn, exec } from 'child_process';
+import { spawn } from 'child_process';
 import proxy from 'express-http-proxy';
 import kill from 'tree-kill';
-const execute = (command) => new Promise((d) => exec(command, function (error, stdout, stderr) { d(stdout); }));
+import tcpPortUsed from 'tcp-port-used';
 
 let child;
 
@@ -23,6 +23,7 @@ app.use('/', async (req, res, next) => {
         if (err) {
           return console.log('Child process was not killed :/ ', err);
         }
+        child.killed = true;
         console.log('Child process killed');
       });
     }
@@ -34,11 +35,21 @@ app.use('/', async (req, res, next) => {
     } else {
       child = spawn(`yarn`, ['develop'], { stdio: ['pipe', 'inherit', 'inherit', 'ipc'] });
     }
+
+    tcpPortUsed.waitUntilUsed({
+      port: 1337,
+      host: '0.0.0.0',
+      timeOutMs: 1 * 60 * 1000,
+      retryTimeMs: 1000
+    }).then(() => {
+      child.strapiReady = true;
+    }).catch(err => {
+      console.error('Error happened when checking if port is in use. ', err);
+    });
     return res.send('Waking up Strapi, please wait...');
   }
 
-  const execResult = await execute(`lsof -i:1337 -t`);
-  if (execResult) {
+  if (child?.strapiReady) {
     next();
   } else {
     res.send('Still waking up...');
@@ -98,5 +109,11 @@ app.listen(process.env.PORT || 3000, () => {
 // `process.exit` callback
 process.on('exit', (code) => {
   console.log(`App exits with code "${code}". Synchronous cleanup can be done here.`);
-  child?.kill();
+  kill(child.pid, 'SIGKILL', (err) => {
+    if (err) {
+      return console.log('Child process was not killed :/ ', err);
+    }
+    child.killed = true;
+    console.log('Child process killed due to parent process exit');
+  });
 });
