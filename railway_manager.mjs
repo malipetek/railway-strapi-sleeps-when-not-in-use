@@ -3,6 +3,7 @@
 import express from 'express';
 import { spawn } from 'child_process';
 import proxy from 'express-http-proxy';
+import kill from 'tree-kill';
 
 let child;
 
@@ -11,25 +12,29 @@ let timeoutId;
 app.use('/', async (req, res, next) => {
   console.log(req.path);
 
-  console.log('!child || child.killed', !child, child?.killed);
-  if (!child || child.killed) {
-    if (process.argv.indexOf('--local') >= 0) {
-      child = spawn(`railway`, ['run', '-e', 'development', '-s', 'Strapi',  'yarn', 'develop'], { stdio: ['pipe', 'inherit', 'inherit', 'ipc'] });
-    } else {
-      child = spawn(`yarn`, ['develop'], { stdio: ['pipe', 'inherit', 'inherit', 'ipc'] });
-    }
-    return res.send('Waking up Strapi, please wait...');
-  }
 
   if (timeoutId) {
     clearTimeout(timeoutId);
   }
   timeoutId = setTimeout(() => {
     if (!child.killed) {
-      child.kill();
-      console.log('Child process killed');
+      kill(child.pid, 'SIGKILL', (err) => {
+        if (err) {
+          return console.log('Child process was not killed :/ ', err);
+        }
+        console.log('Child process killed');
+      });
     }
-  }, 1 * 60 * 1000); // kill after 1 minute
+  }, 2 * 60 * 1000); // kill after 2 minute
+
+  if (!child || child.killed) {
+    if (process.argv.indexOf('--local') >= 0) {
+      child = spawn(`railway`, ['run', '-e', 'development', '-s', 'Strapi', 'yarn', 'develop'], { stdio: ['pipe', 'inherit', 'inherit', 'ipc'] });
+    } else {
+      child = spawn(`yarn`, ['develop'], { stdio: ['pipe', 'inherit', 'inherit', 'ipc'] });
+    }
+    return res.send('Waking up Strapi, please wait...');
+  }
 
   next();
 }, proxy('http://0.0.0.0:1337'));
