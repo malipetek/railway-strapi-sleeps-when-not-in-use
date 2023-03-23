@@ -56,7 +56,8 @@ app.use('/', async (req, res, next) => {
   }
 }, proxy('http://0.0.0.0:1337'));
 
-app.listen(process.env.PORT || 3000, () => {
+// @ts-ignore
+app.listen((+process.env.PORT) || 3000, '0.0.0.0', () => {
   console.log('listening on ', process.env.PORT || 3000);
 });
 
@@ -114,6 +115,7 @@ process.on('exit', (code) => {
       return console.log('Child process was not killed :/ ', err);
     }
     child.killed = true;
+    child.strapiReady = false;
     console.log('Child process killed due to parent process exit');
   });
 });
